@@ -41,7 +41,7 @@ class BinaryClassifier extends SparkJob with NamedRddSupport {
     // Clear the default threshold.
     model.clearThreshold()
 
-    // Compute raw scores on the test set. 
+    // Compute raw scores on the test set.
     val scoreAndLabels = test.map { point =>
       val score = model.predict(point.features)
       (score, point.label)
@@ -58,6 +58,6 @@ class BinaryClassifier extends SparkJob with NamedRddSupport {
       "testSplit" -> testSplit,
       "auROC" -> auROC
     )
-    return result
+    result
   }
 }
