@@ -27,6 +27,6 @@ class CatN extends SparkJob with NamedRddSupport {
       "n" -> n,
       "data" -> data.take(n)
     )
-    return result
+    result
   }
 }

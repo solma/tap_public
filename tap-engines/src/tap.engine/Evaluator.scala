@@ -25,6 +25,6 @@ class Evaluator extends SparkJob with NamedRddSupport {
     val result = Map(
       "pmmlString" -> pmmlString
     )
-    return result
+    result
   }
 }
