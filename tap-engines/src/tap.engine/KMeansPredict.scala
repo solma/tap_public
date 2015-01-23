@@ -38,7 +38,7 @@ object KMeansPredict extends SparkJob with NamedRddSupport {
     // val mergedOutput = vectorData.zip(indicies)
 
     namedRdds.update(output0Name, indicies)
-    
+
     val result = Map(
       "input0" -> input0Name,
       "output0" -> output0Name,
