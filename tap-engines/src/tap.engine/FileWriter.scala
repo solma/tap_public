@@ -30,6 +30,6 @@ class FileWriter extends SparkJob with NamedRddSupport {
       "input0" -> input0Name,
       "outputFile" -> outputFileName
     )
-    return result
+    result
   }
 }

@@ -48,6 +48,6 @@ object ClusterAnalysis extends SparkJob with NamedRddSupport {
       "centers" -> model.clusterCenters,
       "WSSSE" -> WSSSE
     )
-    return result
+    result
   }
 }

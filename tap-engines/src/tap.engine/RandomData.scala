@@ -45,6 +45,6 @@ object RandomData extends SparkJob with NamedRddSupport {
     val result = Map(
       "output0" -> output0Name
     )
-    return result
+    result
   }
 }

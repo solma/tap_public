@@ -27,17 +27,19 @@ class FileReader extends SparkJob with NamedRddSupport {
     val output0Name = config.getString("FileReader.output0")
 
     namedRdds.update(output0Name, format match {
-	case "libSVM" => MLUtils.loadLibSVMFile(sc, config.getString("FileReader.inputFile"))
-	case "rating" => sc.textFile(config.getString("FileReader.inputFile")).
-	  map(_.split(',') match {case Array(user, item, rate) => Rating(user.toInt, item.toInt, rate.toDouble)})
-	case _ => sc.textFile(config.getString("FileReader.inputFile")).
-	  map(s => Vectors.dense(s.split(' ').map(_.toDouble)))
+      case "libSVM" => MLUtils.loadLibSVMFile(sc, config.getString("FileReader.inputFile"))
+      case "rating" => sc.textFile(config.getString("FileReader.inputFile")).
+        map(_.split(',') match {
+          case Array(user, item, rate) => Rating(user.toInt, item.toInt, rate.toDouble)
+        })
+      case _ => sc.textFile(config.getString("FileReader.inputFile")).
+        map(s => Vectors.dense(s.split(' ').map(_.toDouble)))
     })
 
     val result = Map(
       "inputFile" -> config.getString("FileReader.inputFile"),
       "output0" -> output0Name
     )
-    return result
+    result
   }
 }

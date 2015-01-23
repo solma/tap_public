@@ -34,7 +34,7 @@ class Recommender extends SparkJob with NamedRddSupport {
     }
     val predictions =
       model.predict(usersProducts).map { case Rating(user, product, rate) =>
-	((user, product), rate)
+        ((user, product), rate)
       }
     val ratesAndPreds = ratings.map { case Rating(user, product, rate) =>
       ((user, product), rate)
@@ -50,6 +50,6 @@ class Recommender extends SparkJob with NamedRddSupport {
       "rank" -> rank,
       "MSE" -> MSE
     )
-    return result
+    result
   }
 }

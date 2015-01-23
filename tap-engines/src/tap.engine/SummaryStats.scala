@@ -40,6 +40,6 @@ object SummaryStats extends SparkJob with NamedRddSupport {
       "numNonzeros" -> summary.numNonzeros,
       "variance" -> summary.variance
     )
-    return result
+    result
   }
 }

@@ -25,14 +25,11 @@ object TakeSample extends SparkJob with NamedRddSupport {
     // val inputRDD = namedRdds.get(input0Name).get
     val inputRDD = namedRdds.get[org.apache.spark.mllib.linalg.Vector](input0Name).get
 
-    // val sampleOutput = inputRDD.takeSample(false, count, seed)
-    // val sampleOutput = inputRDD.take(count)
-
     val result = Map(
       "input0" -> input0Name,
       "count" -> count,
       "data" -> inputRDD.takeSample(false, count, seed)
     )
-    return result
+    result
   }
 }

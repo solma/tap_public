@@ -64,6 +64,6 @@ class TwitterFeed extends SparkJob with NamedRddSupport {
     val result = Map(
       "foo" -> "bar"
     )
-    return result
+    result
   }
 }

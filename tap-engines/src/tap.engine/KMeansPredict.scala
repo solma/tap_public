@@ -44,6 +44,6 @@ object KMeansPredict extends SparkJob with NamedRddSupport {
       "output0" -> output0Name,
       "centers" -> model.clusterCenters
     )
-    return result
+    result
   }
 }
