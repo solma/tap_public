@@ -23,7 +23,8 @@ object TapBuild extends Build {
   import Dependencies._
 
   lazy val tapEnginesJar = Project(id = "tap-engines", base = file("tap-engines"),
-    settings = commonSettings210 ++ Assembly.settings ++ Seq(libraryDependencies ++= sparkDeps ++ apiDeps,
+    settings = commonSettings210 ++ Assembly.settings ++ Seq(
+                                        libraryDependencies ++= sparkDeps ++ apiDeps ++coreTestDeps,
                                         publishArtifact := false,
                                         description := "Test jar for Spark Job Server",
                                         exportJars := true)   // use the jar instead of target/classes
