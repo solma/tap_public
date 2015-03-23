@@ -12,9 +12,8 @@ object NormalizeByStd extends UFunc{
 
   implicit object implDV_Double extends Impl[DenseVector[Double], DenseVector[Double]] {
     def apply(v: DenseVector[Double]) = {
-      val avg = mean(v)
-      val std = stddev(v)
-      v.map(math.normalize(_, avg, std))
+      val meanAndVar: MeanAndVariance = meanAndVariance(v)
+      v.map(math.normalize(_, meanAndVar.mean, meanAndVar.stdDev))
     }
   }
 }
