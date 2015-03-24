@@ -11,7 +11,7 @@ import tap.engine.math
 object NormalizeByStd extends UFunc{
 
   implicit object implDV_Double extends Impl[DenseVector[Double], DenseVector[Double]] {
-    def apply(v: DenseVector[Double]) = {
+    def apply(v: DenseVector[Double]) : DenseVector[Double] = {
       val meanAndVar: MeanAndVariance = meanAndVariance(v)
       v.map(math.normalize(_, meanAndVar.mean, meanAndVar.stdDev))
     }
