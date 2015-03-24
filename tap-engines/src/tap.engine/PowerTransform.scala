@@ -47,11 +47,10 @@ object PowerTransform extends SparkJob with NamedRddSupport {
   }
 
   def transform(v: SV, lambda: Vector[Double]): SV = {
-    val dv = DenseVector(v.toArray)
-    require(dv.length == lambda.size, "Vectors must be the same length!")
+    require(v.size == lambda.size, "Vectors must be the same length!")
 
-    val transformed = dv.copy
-    for ((i, x) <- dv.activeIterator) {
+    val transformed = DenseVector(v.toArray)
+    for ((i, x) <- transformed.activeIterator) {
       transformed(i) = math.boxCox(v(i), lambda(i))
     }
     Vectors.dense(transformed.toArray)
