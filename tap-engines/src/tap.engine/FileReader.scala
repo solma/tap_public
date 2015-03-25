@@ -23,6 +23,7 @@ class FileReader extends SparkJob with NamedRddSupport {
   override def runJob(sc: SparkContext, config: Config): Any = {
     // Load and parse the data
     val format = config.getString("FileReader.format")
+    val delimiter = config.getString("FileReader.delimiter")
     val data = sc.textFile(config.getString("FileReader.inputFile"))
     val output0Name = config.getString("FileReader.output0")
 
@@ -33,7 +34,7 @@ class FileReader extends SparkJob with NamedRddSupport {
           case Array(user, item, rate) => Rating(user.toInt, item.toInt, rate.toDouble)
         })
       case _ => sc.textFile(config.getString("FileReader.inputFile")).
-        map(s => Vectors.dense(s.split(' ').map(_.toDouble)))
+        map(s => Vectors.dense(s.split(delimiter).map(_.toDouble)))
     })
 
     val result = Map(
