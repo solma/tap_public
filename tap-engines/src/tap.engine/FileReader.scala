@@ -18,12 +18,8 @@ import scala.util.Try
  * config = """
  * FileReader {
  *    inputFile="gs://yourBucket/yourFile"
-<<<<<<< Updated upstream
- *    format="format (one of the following: CSV)"
-=======
  *    format="CSV" # options include "rating", "libSVM"
  *    delimiter="," # not required if the format (e.g. "libSVM") implicitly defines a delimiter
->>>>>>> Stashed changes
  *    output0="outputRddName"
  * }
  * """
