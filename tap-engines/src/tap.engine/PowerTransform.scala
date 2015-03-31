@@ -9,11 +9,46 @@ import spark.jobserver._
 import scala.collection.JavaConversions._
 import scala.util.Try
 
+/**
+ * Transform Spark mllib vectors using the Box-cox function.
+ *
+ * ==Input Json template==
+ *
+ * {{{
+ * config = """
+ * PowerTransform {
+ *    input0="inputRddName"
+ *    lambda=[λ1, λ2, ... , λn] # lambda vector for power transform, n is the dimension of vectors
+ *    output0="outputRddName"
+ * }
+ * """
+ * }}}
+ *
+ * To construct your own config, simply replace the values in the quotes above.
+ *
+ * ==Output Json format==
+ * {{{
+ * result =
+ * {
+ *   input0="inputRddName"
+ *   output0="outputRddName"
+ * }
+ * }}}
+ *
+ * To retrieve a value by key, simply use the key name.
+ *
+ * E.g. the following code retrieves the name of the output RDD
+ * (assuming `resp` is the object name returned from the call to this module).
+ * {{{
+ *   resp['result']['output0']
+ * }}}
+ */
 object PowerTransform extends SparkJob with NamedRddSupport {
 
-  private val configInputKey = "PowerTransform.input0"
-  private val configParamKey = "PowerTransform.lambda"
-  private val configOutputKey = "PowerTransform.output0"
+  private val ObjectName = this.getClass.getSimpleName.split('$').head
+  private val configInputKey = ObjectName + ".input0"
+  private val configParamKey = ObjectName + ".lambda"
+  private val configOutputKey = ObjectName + ".output0"
 
   override def validate(sc: SparkContext, config: Config): SparkJobValidation = {
     Try(config.getString(configInputKey))

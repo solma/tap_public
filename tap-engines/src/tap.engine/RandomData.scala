@@ -1,21 +1,32 @@
 package tap.engine
 
+import java.util.HashMap
+
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark._
-import org.apache.spark.SparkContext._
-import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.mllib.random.RandomRDDs._
-import org.apache.spark.mllib.stat.{MultivariateStatisticalSummary, Statistics}
-import scala.util.Try
-import spray.json._
-import spray.json.DefaultJsonProtocol._
 import spark.jobserver._
+
+import scala.util.Try
 
 object RandomData extends SparkJob with NamedRddSupport {
 
+  val ObjectName = this.getClass.getSimpleName.split('$').head
+  val DistributionKey = ObjectName + ".mode"
+  val NumberOfRowsKey = ObjectName + ".numRows"
+  val NumberOfColumnsKey = ObjectName + ".numCols"
+  val OutputRddKeyName = ObjectName + ".output0"
+
   def main(args: Array[String]) {
     val sc = new SparkContext("local[4]", "WordCountExample")
-    val config = ConfigFactory.parseString("")
+
+    val confMap: HashMap[String, String]= new HashMap[String, String]()
+    confMap.put(DistributionKey, "uniformVector")
+    confMap.put(NumberOfRowsKey, "10")
+    confMap.put(NumberOfColumnsKey, "10")
+    confMap.put(OutputRddKeyName, "test")
+
+    val config = ConfigFactory.parseMap(confMap)
     val results = runJob(sc, config)
     println("Result is " + results)
   }
@@ -30,10 +41,10 @@ object RandomData extends SparkJob with NamedRddSupport {
   }
 
   override def runJob(sc: SparkContext, config: Config): Any = {
-    val mode = config.getString("RandomData.mode")
-    val output0Name = config.getString("RandomData.output0")
-    val numRows = config.getLong("RandomData.numRows")
-    val numCols = config.getInt("RandomData.numCols")
+    val mode = config.getString(DistributionKey)
+    val output0Name = config.getString(OutputRddKeyName)
+    val numRows = config.getLong(NumberOfRowsKey)
+    val numCols = config.getInt(NumberOfColumnsKey)
 
     val randomRdd = mode match {
       case "uniformVector" => uniformVectorRDD(sc, numRows, numCols)
