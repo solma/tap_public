@@ -18,7 +18,7 @@ import scala.util.Try
  * config = """
  * PowerTransform {
  *    input0="inputRddName"
- *    lambda=[λ1, λ2, ... , λn] # lambda vector for power transform, n is the dimension of vectors
+ *    lambda=[l1, l2, ... , ln] # lambda vector for power transform, n is the dimension of vectors
  *    output0="outputRddName"
  * }
  * """

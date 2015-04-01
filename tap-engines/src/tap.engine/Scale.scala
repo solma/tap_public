@@ -16,8 +16,9 @@ import scala.util.Try
  *
  * {{{
  * config = """
- * PowerTransform {
+ * Scale {
  *    input0="inputRddName"
+ *    withMean=False # whether to center the data at mean
  *    output0="outputRddName"
  * }
  * """
@@ -47,6 +48,7 @@ object Scale extends SparkJob with NamedRddSupport {
   private val ObjectName = this.getClass.getSimpleName.split('$').head
   private val ConfigInputKey = ObjectName + ".input0"
   private val ConfigOutputKey = ObjectName + ".output0"
+  private val WithMeanKey = ObjectName + ".withMean"
 
   override def validate(sc: SparkContext, config: Config): SparkJobValidation = {
     Try(config.getString(ConfigInputKey))
@@ -57,7 +59,8 @@ object Scale extends SparkJob with NamedRddSupport {
   override def runJob(sc: SparkContext, config: Config): Any = {
     val input0Name = config.getString(ConfigInputKey)
     val inputVectors = namedRdds.get[SV](input0Name).get
-    val outputVectors = normalizeScale(inputVectors)
+    val withMean = config.getBoolean(WithMeanKey)
+    val outputVectors = normalizeScale(inputVectors, withMean)
 
     val output0Name = config.getString(ConfigOutputKey)
     namedRdds.update(output0Name, outputVectors)
@@ -69,8 +72,8 @@ object Scale extends SparkJob with NamedRddSupport {
     result
   }
 
-  def normalizeScale(vectors: RDD[SV]): RDD[SV] = {
-    val standardScaler = new StandardScaler(withStd = true, withMean = true).fit(vectors)
+  def normalizeScale(vectors: RDD[SV], withMean: Boolean): RDD[SV] = {
+    val standardScaler = new StandardScaler(withStd = true, withMean = withMean).fit(vectors)
     vectors.map(v => standardScaler.transform(v)).cache()
   }
 }
