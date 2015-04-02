@@ -23,31 +23,45 @@ object ClusterAnalysis extends SparkJob with NamedRddSupport {
 
   override def runJob(sc: SparkContext, config: Config): Any = {
     // Load and parse the data
-    val method = config.getString("ClusterAnalysis.method")
-    val input0Name = config.getString("ClusterAnalysis.input0")
+    val myConf = config.withFallback(ConfigFactory.load())
+
+    val method = myConf.getString("ClusterAnalysis.method")
+    val input0Name = myConf.getString("ClusterAnalysis.input0")
     val parsedData = namedRdds.get[org.apache.spark.mllib.linalg.Vector](input0Name).get
 
-    // Cluster the data into two classes using KMeans
-    val numClusters = config.getInt("ClusterAnalysis.numClusters")
-    val numIterations = config.getInt("ClusterAnalysis.numIterations")
+    val numClusters = myConf.getInt("ClusterAnalysis.numClusters")
+    val numIterations = myConf.getInt("ClusterAnalysis.numIterations")
     val model = KMeans.train(parsedData, numClusters, numIterations)
+    val indicies = model.predict(parsedData)
+
+    val clusterSizesFlag = myConf.getBoolean("ClusterAnalysis.withClusterSizes")
+    val WSSSEFlag = myConf.getBoolean("ClusterAnalysis.withWSSSE")
+    val predictFlag = myConf.hasPath("ClusterAnalysis.output0")
 
     val os = new ObjectOutputStream(new FileOutputStream("/tmp/example.dat"))
     os.writeObject(model)
     os.close()
 
-    // Evaluate clustering by computing Within Set Sum of Squared Errors
-    val WSSSE = model.computeCost(parsedData)
-
-    val result = Map(
+    var result = Map(
       "method" -> method,
       "input0" -> input0Name,
       "dataCount" -> parsedData.count(),
       "numClusters" -> numClusters,
       "numIterations" -> numIterations,
-      "centers" -> model.clusterCenters,
-      "WSSSE" -> WSSSE
+      "centers" -> model.clusterCenters
     )
+
+    if (clusterSizesFlag) {
+      // If the flag is set, calculate the size for each cluster
+      val counters = indicies.map(id => (id, 1)).reduceByKey(_ + _).collect()
+      result = result + ("clusterSizes" -> counters)
+    }
+    if (WSSSEFlag) {
+      // Evaluate clustering by computing Within Set Sum of Squared Errors
+      val WSSSE = model.computeCost(parsedData)
+      result = result + ("WSSSE" -> WSSSE)
+    }
+    
     result
   }
 }
