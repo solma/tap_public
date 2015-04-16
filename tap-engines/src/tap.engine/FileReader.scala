@@ -7,8 +7,9 @@ import org.apache.spark.mllib.recommendation.Rating
 import org.apache.spark.mllib.util.MLUtils
 import spark.jobserver._
 
-import scala.util.Try
+import TapUtil._
 
+import scala.util.Try
 /**
  * Load input data from storage sources, such as Google CloudStorage.
  *
@@ -53,8 +54,7 @@ object FileReader extends SparkJob with NamedRddSupport {
   val InputFileKeyName = "inputFile"
   val InputFileKeyPath = ObjectName + "." + InputFileKeyName
   val InputFileFormatKeyPath = ObjectName + ".format"
-  val OutputRddKeyName = "output0"
-  val OutputRddNameKeyPath = ObjectName + "." + OutputRddKeyName
+  val OutputRddNameKeyPath = ObjectName + "." + OutputRddKey
 
   override def validate(sc: SparkContext, config: Config): SparkJobValidation = {
     Try(config.getString(InputFileKeyPath))
@@ -77,20 +77,25 @@ object FileReader extends SparkJob with NamedRddSupport {
     val inputFilePath = config.getString(InputFileKeyPath)
     val output0Name = config.getString(OutputRddNameKeyPath)
 
-
-    namedRdds.update(output0Name, format match {
-      case "libSVM" => MLUtils.loadLibSVMFile(sc, inputFilePath)
-      case "rating" => sc.textFile(inputFilePath).
-        map(_.split(',') match {
+    if (isDryRun(sc)) {
+      namedRdds.update(DryRunRddPrefix + output0Name, format match {
+        case _ => sc.parallelize(Seq(Vectors.dense(1, 2, 3)))
+      })
+    } else {
+      namedRdds.update(output0Name, format match {
+        case "libSVM" => MLUtils.loadLibSVMFile(sc, inputFilePath)
+        case "rating" => sc.textFile(inputFilePath).
+          map(_.split(',') match {
           case Array(user, item, rate) => Rating(user.toInt, item.toInt, rate.toDouble)
         })
-      case _ => sc.textFile(inputFilePath).
-        map(s => Vectors.dense(s.split(delimiter).map(_.toDouble)))
-    })
+        case _ => sc.textFile(inputFilePath).
+          map(s => Vectors.dense(s.split(delimiter).map(_.toDouble)))
+      })
+    }
 
     val result = Map(
       InputFileKeyName -> inputFilePath,
-      OutputRddKeyName -> output0Name
+      OutputRddKey -> output0Name
     )
     result
   }
