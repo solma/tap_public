@@ -1,7 +1,7 @@
 package tap.engine
 
-import com.typesafe.config.{Config, ConfigException}
-import org.apache.spark.{SparkConf, SparkContext}
+import com.typesafe.config.Config
+import org.apache.spark.SparkContext
 import spark.jobserver._
 
 import scala.collection.JavaConversions._
@@ -42,18 +42,4 @@ object TapConfig extends SparkJob with NamedRddSupport {
   }
 
   def isDryRun(): Boolean = tapConfig.get(DryRunKey).getOrElse("False").toBoolean
-
-  def setConfigValue(sc: SparkConf, config: Config, keyName: String): Unit = {
-    try {
-      val keyValue = config.getString(ObjectName + '.' + keyName)
-      println(keyName + " " + keyValue + " " + sc.get(keyName))
-      if (keyValue != sc.get(keyName)) {
-        sc.set(keyName, keyValue)
-        println(sc.get(keyName))
-      }
-    } catch {
-      case e: ConfigException.Missing =>
-      case e: ConfigException.WrongType =>
-    }
-  }
 }
