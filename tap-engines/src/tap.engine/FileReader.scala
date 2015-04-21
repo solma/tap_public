@@ -8,6 +8,7 @@ import org.apache.spark.mllib.util.MLUtils
 import spark.jobserver._
 
 import TapUtil._
+import TapConfig._
 
 import scala.util.Try
 /**
@@ -77,7 +78,7 @@ object FileReader extends SparkJob with NamedRddSupport {
     val inputFilePath = config.getString(InputFileKeyPath)
     val output0Name = config.getString(OutputRddNameKeyPath)
 
-    if (isDryRun(sc)) {
+    if (isDryRun()) {
       namedRdds.update(DryRunRddPrefix + output0Name, format match {
         case _ => sc.parallelize(Seq(Vectors.dense(1, 2, 3)))
       })
