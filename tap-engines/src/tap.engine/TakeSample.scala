@@ -10,7 +10,7 @@ import tap.engine.TapUtil._
 
 import scala.util.Try
 
-object TakeSample extends SparkJob with NamedRddSupport {
+object TakeSample extends SparkJob with DryRunSupport with NamedRddSupport {
 
   val ObjectName = this.getClass.getSimpleName.split('$').head
 
@@ -35,21 +35,39 @@ object TakeSample extends SparkJob with NamedRddSupport {
     )
 
     if (isDryRun()) {
-      val firstElement = namedRdds.get[Any](DryRunRddPrefix + config.getString(InputRddKeyPath)).get.first()
-      val RatingClassName = Rating.getClass.getName
       val mockData = namedRdds.update(DryRunRddPrefix + config.getString(OutputRddKeyPath),
-        sc.parallelize(firstElement.getClass.getName match {
-          case RatingClassName => {
-            val rating = firstElement.asInstanceOf[Rating]
-            Seq(rating.user, rating.product, rating.rating)
-          }
-          case _ => Seq(firstElement)
-        }))
+        sc.parallelize(genMockData(config.getString(InputRddKeyPath))))
       result + ("data" -> mockData)
     } else {
       val seed = config.getLong(ObjectName + ".seed")
       val inputRDD = namedRdds.get(input0Name).get
       result + ("data" -> inputRDD.takeSample(false, count, seed))
+    }
+  }
+
+  override def genMockData(upstreamRddName: String): Seq[Any] = {
+    val upstreamMockRdd = namedRdds.get[Any](DryRunRddPrefix + upstreamRddName)
+    if (upstreamMockRdd.isEmpty) {
+      val upstreamRdd = namedRdds.get[Any](upstreamRddName)
+      if (upstreamRdd.isEmpty) {
+        Seq[Exception](
+          new NoSuchElementException("no RDD exits for neither " + upstreamRddName + " nor its mock data"))
+      } else {
+        convertMockData(upstreamRdd.get.first())
+      }
+    } else {
+      convertMockData(upstreamMockRdd.get.first())
+    }
+  }
+
+  def convertMockData(mockedInput: Any): Seq[Any] = {
+    val RatingClassName = Rating.getClass.getName
+    mockedInput.getClass.getName match {
+      case RatingClassName => {
+        val rating = mockedInput.asInstanceOf[Rating]
+        Seq(rating.user, rating.product, rating.rating)
+      }
+      case _ => Seq(mockedInput)
     }
   }
 }

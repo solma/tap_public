@@ -47,7 +47,7 @@ import scala.util.Try
  * }}}
  */
 
-object FileReader extends SparkJob with NamedRddSupport {
+object FileReader extends SparkJob with DryRunSupport with NamedRddSupport {
 
   val ObjectName = this.getClass.getSimpleName.split('$').head
 
@@ -76,12 +76,11 @@ object FileReader extends SparkJob with NamedRddSupport {
     val delimiter = config.getString(DelimiterKeyPath)
     val format = config.getString(InputFileFormatKeyPath)
     val inputFilePath = config.getString(InputFileKeyPath)
-    val output0Name = config.getString(OutputRddNameKeyPath)
+    var output0Name = config.getString(OutputRddNameKeyPath)
 
     if (isDryRun()) {
-      namedRdds.update(DryRunRddPrefix + output0Name, format match {
-        case _ => sc.parallelize(Seq(Vectors.dense(1, 2, 3)))
-      })
+      output0Name = DryRunRddPrefix + output0Name
+      namedRdds.update(output0Name, sc.parallelize(genMockData("")))
     } else {
       namedRdds.update(output0Name, format match {
         case "libSVM" => MLUtils.loadLibSVMFile(sc, inputFilePath)
@@ -100,4 +99,7 @@ object FileReader extends SparkJob with NamedRddSupport {
     )
     result
   }
+
+  override def genMockData(upstreamRddName: String): Seq[Any] =
+    Seq(Vectors.dense(1, 2, 3), Vectors.dense(4, 5, 6), Vectors.dense(7, 8, 9))
 }
