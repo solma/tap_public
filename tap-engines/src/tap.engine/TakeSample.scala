@@ -36,7 +36,7 @@ object TakeSample extends SparkJob with DryRunSupport with NamedRddSupport {
 
     if (isDryRun()) {
       val mockData = namedRdds.update(DryRunRddPrefix + config.getString(OutputRddKeyPath),
-        sc.parallelize(genMockData(config.getString(InputRddKeyPath))))
+        sc.parallelize(genMockData(this, Option(config.getString(InputRddKeyPath)))))
       result + ("data" -> mockData)
     } else {
       val seed = config.getLong(ObjectName + ".seed")
@@ -45,22 +45,7 @@ object TakeSample extends SparkJob with DryRunSupport with NamedRddSupport {
     }
   }
 
-  override def genMockData(upstreamRddName: String): Seq[Any] = {
-    val upstreamMockRdd = namedRdds.get[Any](DryRunRddPrefix + upstreamRddName)
-    if (upstreamMockRdd.isEmpty) {
-      val upstreamRdd = namedRdds.get[Any](upstreamRddName)
-      if (upstreamRdd.isEmpty) {
-        Seq[Exception](
-          new NoSuchElementException("no RDD exits for neither " + upstreamRddName + " nor its mock data"))
-      } else {
-        convertMockData(upstreamRdd.get.first())
-      }
-    } else {
-      convertMockData(upstreamMockRdd.get.first())
-    }
-  }
-
-  def convertMockData(mockedInput: Any): Seq[Any] = {
+  override def convertMockData(mockedInput: Any): Seq[Any] = {
     val RatingClassName = Rating.getClass.getName
     mockedInput.getClass.getName match {
       case RatingClassName => {

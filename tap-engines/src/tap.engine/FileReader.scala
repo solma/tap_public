@@ -80,7 +80,7 @@ object FileReader extends SparkJob with DryRunSupport with NamedRddSupport {
 
     if (isDryRun()) {
       output0Name = DryRunRddPrefix + output0Name
-      namedRdds.update(output0Name, sc.parallelize(genMockData("")))
+      namedRdds.update(output0Name, sc.parallelize(genMockData(this, None)))
     } else {
       namedRdds.update(output0Name, format match {
         case "libSVM" => MLUtils.loadLibSVMFile(sc, inputFilePath)
@@ -100,6 +100,6 @@ object FileReader extends SparkJob with DryRunSupport with NamedRddSupport {
     result
   }
 
-  override def genMockData(upstreamRddName: String): Seq[Any] =
+  override def convertMockData(mockedInput: Any): Seq[Any] =
     Seq(Vectors.dense(1, 2, 3), Vectors.dense(4, 5, 6), Vectors.dense(7, 8, 9))
 }
