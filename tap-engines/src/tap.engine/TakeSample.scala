@@ -5,11 +5,12 @@ import org.apache.spark._
 import org.apache.spark.mllib.linalg.{Vector => SV}
 import org.apache.spark.mllib.recommendation.Rating
 import spark.jobserver._
+import tap.engine.core.TapCompatible
 
 object TakeSample extends SparkJob with NamedRddSupport with TapCompatible {
 
-  val inputRddsKey = Seq(DefaultInputRddKey)
-  val outputRddsKey = Nil
+  override val inputRddsKey = Seq(DefaultInputRddKey)
+  override val outputRddsKey = Nil
 
   val iCount = "count"
   val iSeed = "seed"

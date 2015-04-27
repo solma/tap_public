@@ -6,6 +6,7 @@ import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.mllib.recommendation.Rating
 import org.apache.spark.mllib.util.MLUtils
 import spark.jobserver._
+import tap.engine.core.TapCompatible
 
 /**
  * Load input data from storage sources, such as Google CloudStorage.
@@ -45,15 +46,15 @@ import spark.jobserver._
 
 object FileReader extends SparkJob with TapCompatible with NamedRddSupport {
 
-  val inputRddsKey = Nil
-  val outputRddsKey = Seq(DefaultOutputRddKey)
+  override val inputRddsKey = Nil
+  override val outputRddsKey = Seq(DefaultOutputRddKey)
 
-  val iFormat = "format"
   val iInputFile = "inputFile"
+  val iFormat = "format"
   override val requiredInputConfigKeys = Seq(iFormat, iInputFile)
 
   val iDelimiter = "delimiter"
-  override val optionalInputConfigKeys = Seq(iDelimiter)
+  override val optionalInputConfigKeys = Seq(iDelimiter, iFormat)
 
   override val requiredOutputResultKeys = Seq(DefaultInputRddKey, DefaultOutputRddKey)
 
@@ -68,7 +69,6 @@ object FileReader extends SparkJob with TapCompatible with NamedRddSupport {
    */
   override def runJob(sc: SparkContext, config: Config): Any = {
     run(namedRdds, sc, config)
-
     val result = Map(
       DefaultInputRddKey -> config.getString(withModuleNamePrefix(iInputFile)),
       DefaultOutputRddKey -> config.getString(withModuleNamePrefix(DefaultOutputRddKey))
@@ -80,7 +80,6 @@ object FileReader extends SparkJob with TapCompatible with NamedRddSupport {
     Seq(Vectors.dense(1, 2, 3), Vectors.dense(4, 5, 6), Vectors.dense(7, 8, 9))
 
   override def trueRun(sc: SparkContext, config: Config): Any = {
-    val delimiter = config.getString(withModuleNamePrefix(iDelimiter))
     val format = config.getString(withModuleNamePrefix(iFormat))
     val inputFilePath = config.getString(withModuleNamePrefix(iInputFile))
     val output0Name = config.getString(withModuleNamePrefix(DefaultOutputRddKey))
@@ -90,8 +89,11 @@ object FileReader extends SparkJob with TapCompatible with NamedRddSupport {
         map(_.split(',') match {
         case Array(user, item, rate) => Rating(user.toInt, item.toInt, rate.toDouble)
       })
-      case _ => sc.textFile(inputFilePath).
-        map(s => Vectors.dense(s.split(delimiter).map(_.toDouble)))
+      case _ => {
+        val delimiter = config.getString(withModuleNamePrefix(iDelimiter))
+        sc.textFile(inputFilePath).
+          map(s => Vectors.dense(s.split(delimiter).map(_.toDouble)))
+      }
     })
   }
 }

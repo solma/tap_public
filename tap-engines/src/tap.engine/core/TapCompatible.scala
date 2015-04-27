@@ -1,15 +1,15 @@
-package tap.engine
+package tap.engine.core
 
 import com.typesafe.config.Config
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import spark.jobserver._
-import tap.engine.TapConfig._
 
 import scala.util.Try
+import TapConfig._
 
 /**
- * Any TAP module needs to implement this trait.
+ * Trait that abstracts common behaviors of TAP modules. All TAP modules need to implement this trait.
  */
 trait TapCompatible {
 

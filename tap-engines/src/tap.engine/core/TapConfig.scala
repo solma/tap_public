@@ -1,4 +1,4 @@
-package tap.engine
+package tap.engine.core
 
 import com.typesafe.config.Config
 import org.apache.spark.SparkContext
@@ -28,17 +28,20 @@ object TapConfig extends SparkJob with NamedRddSupport {
   }
 
   override def runJob(sc: SparkContext, config: Config): Any = {
+    val result = MM[String, String]()
     config.entrySet().foreach(kv => {
       val key = kv.getKey
       val value = kv.getValue.unwrapped().toString
       key match {
         case tapKey if tapKey.startsWith(ObjectName) => {
-          tapConfig.put(key.split('.').tail.mkString("."), value)
-          println(key.split('.').tail.mkString(".") + " -> " + value)
+          val property = key.split('.').tail.mkString(".")
+          tapConfig.put(property, value)
+          result.put(property, value)
         }
         case _ =>
       }
     })
+    result
   }
 
   def isDryRun(): Boolean = tapConfig.get(DryRunKey).getOrElse("False").toBoolean
