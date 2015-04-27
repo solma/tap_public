@@ -5,54 +5,46 @@ import org.apache.spark._
 import org.apache.spark.mllib.linalg.{Vector => SV}
 import org.apache.spark.mllib.recommendation.Rating
 import spark.jobserver._
-import tap.engine.TapConfig._
-import tap.engine.TapUtil._
 
-import scala.util.Try
+object TakeSample extends SparkJob with NamedRddSupport with TapCompatible {
 
-object TakeSample extends SparkJob with DryRunSupport with NamedRddSupport {
+  val inputRddsKey = Seq(DefaultInputRddKey)
+  val outputRddsKey = Nil
 
-  val ObjectName = this.getClass.getSimpleName.split('$').head
+  val iCount = "count"
+  val iSeed = "seed"
+  override val requiredInputConfigKeys = Seq(iCount, iSeed)
 
-  val InputRddKeyPath = ObjectName + '.' + InputRddKey
-  val OutputRddKeyPath = ObjectName + '.' + OutputRddKey
+  val oData = "data"
+  override val requiredOutputResultKeys = Seq(oData)
 
   override def validate(sc: SparkContext, config: Config): SparkJobValidation = {
-    Try(config.getString(InputRddKeyPath))
-      .map(x => SparkJobValid)
-      .getOrElse(SparkJobInvalid("No " + InputRddKeyPath + "config param"))
-    Try(config.getString("TakeSample.count"))
-      .map(x => SparkJobValid)
-      .getOrElse(SparkJobInvalid("No TakeSample.count config param"))
+    checkRequiredInputConfigKeys(config)
   }
 
   override def runJob(sc: SparkContext, config: Config): Any = {
-    val input0Name = config.getString(InputRddKeyPath)
-    val count = config.getInt("TakeSample.count")
-    val result = Map(
-      InputRddKey -> input0Name,
-      "count" -> count
+   val result = Map(
+      DefaultInputRddKey -> config.getString(withModuleNamePrefix(DefaultInputRddKey)),
+      iCount -> config.getInt(withModuleNamePrefix(iCount)),
+      oData -> run(namedRdds, sc, config)
     )
+    result
+  }
 
-    if (isDryRun()) {
-      val mockData = namedRdds.update(DryRunRddPrefix + config.getString(OutputRddKeyPath),
-        sc.parallelize(genMockData(this, Option(config.getString(InputRddKeyPath)))))
-      result + ("data" -> mockData)
-    } else {
-      val seed = config.getLong(ObjectName + ".seed")
-      val inputRDD = namedRdds.get(input0Name).get
-      result + ("data" -> inputRDD.takeSample(false, count, seed))
+  override def generateMockData(upstreamInputMap: Map[String, Any]): Seq[Any] = {
+    val RatingClassName = Rating.getClass.getName
+    upstreamInputMap.get(DefaultInputRddKey).getClass.getName match {
+      case RatingClassName => {
+        val rating = upstreamInputMap.asInstanceOf[Rating]
+        Seq(rating.user, rating.product, rating.rating)
+      }
+      case _ => Seq(upstreamInputMap)
     }
   }
 
-  override def convertMockData(mockedInput: Any): Seq[Any] = {
-    val RatingClassName = Rating.getClass.getName
-    mockedInput.getClass.getName match {
-      case RatingClassName => {
-        val rating = mockedInput.asInstanceOf[Rating]
-        Seq(rating.user, rating.product, rating.rating)
-      }
-      case _ => Seq(mockedInput)
-    }
+  override def trueRun(sc: SparkContext, config: Config): Any = {
+    val seed = config.getLong(withModuleNamePrefix(iSeed))
+    val inputRDD = namedRdds.get(config.getString(withModuleNamePrefix(DefaultInputRddKey))).get
+    inputRDD.takeSample(false, config.getInt(withModuleNamePrefix(iCount)), seed)
   }
 }
